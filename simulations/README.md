@@ -2,7 +2,7 @@ DeerActuary_REU2013
 Simulations Directory
 Shared files for the SUNY Potsdam REU group in stochastic DEs
 
-This is the directory that contains the matlab programs
+This is the directory that contains the matlab, R, and other programs
 to do the Monte Carlo simulations.
 
 All files are subject to the following license.
