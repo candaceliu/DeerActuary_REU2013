@@ -1,4 +1,4 @@
-function [ Xmean, Xvar, Mmean, Mvar ] = MeanVar_DeerInsSim( alpha, gamma, P )
+function [ Xmean, Xvar, Mmean, Mvar ] = MeanVar_DeerInsSim_Mil( alpha, gamma, P )
 %UNTITLED4 Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -17,9 +17,9 @@ Xvec = zeros(1, iterations);
 Mvec = zeros(1, iterations);
 
 for i=1:iterations
-    [Xtrue, Mem] = DeerInsSim( T, N, r1, h, F, alpha, rho, beta, P, gamma, g );
+    [Xtrue, Mmil] = DeerInsSimMil( T, N, r1, h, F, alpha, rho, beta, P, gamma, g );
     Xvec(1,i) = Xtrue(N+1);
-    Mvec(1,i) = Mem(N+1);
+    Mvec(1,i) = Mmil(N+1);
 end
 
 Xmean = mean(Xvec);
