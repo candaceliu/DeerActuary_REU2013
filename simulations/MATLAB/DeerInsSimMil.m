@@ -1,12 +1,12 @@
-function [ Xtrue, Mmil ] = DeerInsSimMil(  T, N, r1, h, F, alpha, rho, beta, P, gamma, g )
+function [ Xtrue, Mmil ] = DeerInsSimMil(  T, N, r1, h, F, alpha, rho, beta, P, gamma, g, dW )
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
-dt = T/N;
-s = (0:dt:T);
+%dt = T/N;
+%s = (0:dt:T);
 
-[ Xtrue, Xmil ] = DeerPopMil(T, N, r1, h, F, alpha);
-[ Mmil ] = InsPayoutMil(T, N, r1, h, F, alpha,  rho, beta, P, gamma, g);
+[ Xtrue, Xmil ] = DeerPopMil(T, N, r1, h, F, alpha, dW);
+[ Mmil ] = InsPayoutMil(T, N, r1, h, F, alpha,  rho, beta, P, gamma, g, dW);
 
 
 
@@ -15,15 +15,17 @@ s = (0:dt:T);
 clf;
 
 %Deer Population
-subplot(1, 2, 1);
+subplot(2, 1, 1);
 plot(s, Xtrue, 'g-', s, Xmil, 'rx')
 title('Deer Population');
 legend('Xtrue', 'Xmil')
+xlabel('t')
 
 %Insurance Payout
-subplot(1, 2, 2);
+subplot(2, 1, 2);
 plot(s, Mmil,'rx')
 title('Insurance Payout');
-legend('Mem')
+legend('Mmil')
+xlabel('t')
 
 %}
