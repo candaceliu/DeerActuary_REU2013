@@ -1,0 +1,10 @@
+*.aux
+*.pdf
+*.snm
+*.out
+*.nav
+*.log
+*.toc
+*.o
+deerPopMilstein
+FinalPresentation.synctex.gz
