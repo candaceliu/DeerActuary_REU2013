@@ -5,4 +5,9 @@
 *.nav
 *.log
 *.toc
+*.o
+*.bbl
+*.blg
+*.el
+deerPopMilstein
 FinalPresentation.synctex.gz

@@ -4,12 +4,12 @@ N = 10000; %start with 10000 then use 25000
 r1 = 1.7;
 h = .16;
 F = 28000;
-rho = .004; %log(1+rate)
+rho = .04; %log(1+rate)
 beta = 9; %.003*3000
 
 % Set up the parameters for the deer simulation
 alpha = 0.15;
-gamma = 20.00;
+gamma = 1.20;
 P     = 277500.0;
 
 rtilde=r1-h;
@@ -19,13 +19,15 @@ b=(.5*(alpha^2))-a;
 g0= 1-(rtilde/b);
 
 % Variables for the bond fund
-g = .005;
+
+g = .05;
 m0 = (beta*ftilde - P)/(rho-g);
 rho = .004; %log(1+rate)
 beta = 9; %.003*3000
 m = m0;
 
-dt=sqrt(T/N);
+dt=T/N;
+sdt = sqrt(dt);
 
 clf;
 h = figure(1);
@@ -41,7 +43,7 @@ hold on;
 
 %Bond funds on 2
 subplot(2, 1, 2);
-axis([0 T 0 3*m0]);
+axis([0 T 0.98*m0 1.04*m0]);
 ylabel('Bond Fund Balance');
 xlabel('time');
 hold on;
@@ -59,8 +61,8 @@ X = ftilde;
 W = 0.0;
 Q = 0.0;
 for j=0:N,
-    dW = dt*randn(1,1);
-    s = j*dt*dt;
+    dW = sdt*randn(1,1);
+    s = j*dt;
     
     % Update the deer population
     Q = Q + exp(b*s+alpha*W).*dW;   %integral part of analytic solution
