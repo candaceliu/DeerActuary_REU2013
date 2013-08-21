@@ -4,7 +4,7 @@
 
 #macro definitions
 SHELL = /bin/sh
-CC=g++
+CC=mpic++
 CFLAGS=-O3 -Winline -finline-functions   -finline-limit=1200  -I/usr/local/include -Wall -std=c++0x
 LIB=-lm -lpthread
 LDEP=

@@ -36,15 +36,17 @@
 #include <iostream>
 #include <thread>
 #include <mutex>
+#include <cstdio>
 
 #include <math.h>
+#include <mpi.h>
 
 /* Helper functions to set command line options. */
 //#include <getopt.h>
 #include <string.h>
 
-#define DEFAULT_FILE "threaded_trial.csv"
-#define NUMBER_THREADS 3
+#define DEFAULT_FILE "threaded_trial"
+#define NUMBER_THREADS 2
 //#define DEBUG
 #define VERBOSE
 
@@ -230,6 +232,7 @@ int main(int argc,char **argv)
    int numP     = 100;
    int numAlpha = 100;
 #endif
+	 int boundsP[2];
    int lupeP,lupeAlpha;
 
    /* define the parameters */
@@ -239,14 +242,67 @@ int main(int argc,char **argv)
 
    /* Define the output parameters. */
    char outFile[1024];
-   strcpy(outFile,DEFAULT_FILE);
 
 	 /* File stuff */
 	 std::ofstream dataFile;
 
+	 /* MPI related variables. */
+	 int  mpiResult;
+	 int  numMPITasks;
+	 int  mpiRank;
+	 char mpiHostname[MPI_MAX_PROCESSOR_NAME];
+	 int  mpiHostnameLen;
+	 MPI_Status mpiStatus;
+
+
+	 // initialize the mpi parameters
+	 mpiResult = MPI_Init (&argc,&argv);
+	 if(mpiResult!= MPI_SUCCESS)
+		 {
+			 std::cout << "MPI not started. Terminating the process." << std::endl;
+			 MPI_Abort(MPI_COMM_WORLD,mpiResult);
+		 }
+
+	 MPI_Comm_size(MPI_COMM_WORLD,&numMPITasks);
+	 MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
+	 MPI_Get_processor_name(mpiHostname, &mpiHostnameLen);
+	 std::cout << "Number of tasks= " <<  numMPITasks
+	                                       << " My rank= " << mpiRank
+	                                       << " Running on " << mpiHostname
+	                                       << std::endl;
+
+
   /* Set the step values for the parameters. */
   deltaP     = calcDelta(Pmin,Pmax,numP);
   deltaAlpha = calcDelta(alphaMin,alphaMax,numAlpha);
+
+	/* Sort out which process is doign what. */
+	if(mpiRank == 0)
+		{
+			// Figure out whow does what.
+			int totalP = numP/numMPITasks;
+			for(lupeP=0;lupeP<(numMPITasks-1);++lupeP)
+				{
+					boundsP[0] = lupeP*totalP;
+					boundsP[1] = (lupeP+1)*totalP;
+					MPI_Send(boundsP,2,MPI_INT,lupeP+1,10,MPI_COMM_WORLD);
+				}
+
+			// Assign my own bounds to what is left.
+			boundsP[0] = (numMPITasks-1)*totalP;
+			boundsP[1] = numP;
+		}
+
+	else
+		{
+			// Get my bounds for the values of P to use.
+			MPI_Recv(boundsP,2,MPI_INT,MPI_ANY_SOURCE,MPI_ANY_TAG,MPI_COMM_WORLD,&mpiStatus);
+			boundsP[1] -= 1;
+		}
+	//std::cout << "Process: " << mpiRank << " Got the bound: " << boundsP[0] << "," << boundsP[1] << std::endl;
+	//MPI_Finalize();
+	//return(0);
+
 
   /* Set the number of iterations used in the main loop. */
   dt  = ((finalTime-initialTime)/((double)numberTimeSteps));
@@ -257,6 +313,7 @@ int main(int argc,char **argv)
 #endif
 
 	/* Open the output file and print out the header. */
+	sprintf(outFile,"%s-%d.csv",DEFAULT_FILE,mpiRank);
 	dataFile.open(outFile,std::ios::out);
   dataFile << "time,P,alpha,x,m,sumx,sumx2,summ,summ2,N" << std::endl;
 
@@ -264,8 +321,11 @@ int main(int argc,char **argv)
 	srand48(time(NULL));
 
 
+	/* Get the details of the mpi processes. */
+
+
 	/* Go through and run the simulations for all possible values of the parameters. */
-  for(lupeP=0;lupeP<=numP;++lupeP)
+  for(lupeP=boundsP[0];lupeP<=boundsP[1];++lupeP)
     {
       P = Pmin + deltaP*((double)lupeP);
 
@@ -318,6 +378,7 @@ int main(int argc,char **argv)
 
 
 	dataFile.close();
+	MPI_Finalize();
 	return(0);
 }
 
