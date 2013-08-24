@@ -27,7 +27,7 @@
 #$ -l h_rt=600:31:00
 
 # Parallel execution request for MPICH. Set your number of processors here.
-#$ -pe mpich 4
+#$ -pe mpich 2
 
 local_dir=$(pwd)
 echo "This job was started in ${local_dir}"
@@ -40,7 +40,7 @@ cat $TMPDIR/machines
 echo ${PE}
 
 # Executing the program
-/share/apps/bin/mpirun -np $NSLOTS -machinefile $TMPDIR/machines ./deerPopMilstein
+/share/apps/bin/mpirun -np $NSLOTS -machinefile $TMPDIR/machines ./mpiFileOperation
 
 # Submit using qsub -pe orte 16 submit.sh
 
