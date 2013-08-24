@@ -60,13 +60,13 @@ double calcDelta(double theMin,double theMax,int number)
 }
 
 /* Routine to write out the given data to the file. */
-void printResults(double dt,int numberTimeSteps,
-                  double P, double alpha,
-                  double m1, double m2, 
-                  double sumX, double sumX2,
-                  double sumM, double sumM2,
-                  int numberIters,
-                  std::ofstream* dataFile)
+void printResultsCSV(double dt,int numberTimeSteps,
+                     double P, double alpha,
+                     double m1, double m2, 
+                     double sumX, double sumX2,
+                     double sumM, double sumM2,
+                     int numberIters,
+                     std::ofstream* dataFile)
 {
   std::lock_guard<std::mutex> guard(writeToFile);  // Make sure that only this routine
                                                    // can access the file at any one time.
@@ -80,6 +80,48 @@ void printResults(double dt,int numberTimeSteps,
   (*dataFile).flush();
 
 
+}
+
+
+/* Routine to write out the given data to the file. */
+void printResultsMPI(double dt,int numberTimeSteps,
+                     double P, double alpha,
+                     double m1, double m2, 
+                     double sumX, double sumX2,
+                     double sumM, double sumM2,
+                     int numberIters,
+                     MPI_File* dataFile)
+{
+  std::lock_guard<std::mutex> guard(writeToFile);  // Make sure that only this routine
+                                                   // can access the file at any one time.
+
+  MPI_Status status;
+  struct output 
+  {
+    double theTime;
+    double P;
+    double alpha;
+    double m1;
+    double m2;
+    double sumX;
+    double sumX2;
+    double sumM;
+    double sumM2;
+    int iterations;
+  };
+  output basicStats;
+
+  basicStats.theTime    = dt*((double)numberTimeSteps);
+  basicStats.P          = P;
+  basicStats.alpha      = alpha;
+  basicStats.m1         = m1;
+  basicStats.m2         = m2;
+  basicStats.sumX       = sumX;
+  basicStats.sumX2      = sumX2;
+  basicStats.sumM       = sumM;
+  basicStats.sumM2      = sumM2;
+  basicStats.iterations = numberIters;
+  MPI_File_write_ordered(*dataFile,&basicStats,sizeof(basicStats), MPI_INT, &status );
 }
 
 
@@ -104,7 +146,7 @@ void samplePath(double P,double alpha,double beta,
                 double dt,
                 double sdt,
                 int numberTimeSteps,
-                std::ofstream* dataFile
+                MPI_File* dataFile
                 )
 {
 
@@ -135,6 +177,10 @@ void samplePath(double P,double alpha,double beta,
   double sumM  = 0.0;
   double sumM2 = 0.0;
   int lupe;
+
+  printResultsMPI(0.1,100,2.0,3.0,4.0,5.0,
+                  6.0,7.0,8.0,9.0,10,dataFile);
+  return;
 
   randNormal(dW); // calc. the initial set of random numbers.
   for(lupe=0;lupe<numberIters;++lupe)
@@ -176,8 +222,8 @@ void samplePath(double P,double alpha,double beta,
       sumM2 += m[1]*m[1]*1.0E-2;
     }
 
-  printResults(dt,numberTimeSteps,P,alpha,m[0],m[1],
-               sumX,sumX2,sumM,sumM2,numberIters,dataFile);
+  printResultsMPI(dt,numberTimeSteps,P,alpha,m[0],m[1],
+                  sumX,sumX2,sumM,sumM2,numberIters,dataFile);
 
 }
 
@@ -245,7 +291,8 @@ int main(int argc,char **argv)
    char outFile[1024];
 
   /* File stuff */
-  std::ofstream dataFile;
+  //std::ofstream dataFile;
+  MPI_File mpiFileHandle;
 
    /* MPI related variables. */
    int  mpiResult;
@@ -267,6 +314,7 @@ int main(int argc,char **argv)
    MPI_Comm_size(MPI_COMM_WORLD,&numMPITasks);
    MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
    MPI_Get_processor_name(mpiHostname, &mpiHostnameLen);
+   MPI_Errhandler_set(MPI_COMM_WORLD,MPI_ERRORS_RETURN);
    std::cout << "Number of tasks= " <<  numMPITasks
                                          << " My rank= " << mpiRank
                                          << " Running on " << mpiHostname
@@ -314,9 +362,33 @@ int main(int argc,char **argv)
 #endif
 
   /* Open the output file and print out the header. */
-  sprintf(outFile,"%s-%d.csv",DEFAULT_FILE,mpiRank);
-  dataFile.open(outFile,std::ios::out);
-  dataFile << "time,P,alpha,x,m,sumx,sumx2,summ,summ2,N" << std::endl;
+  sprintf(outFile,"%s-%d.dat",DEFAULT_FILE,mpiRank);
+  //dataFile.open(outFile,std::ios::out);
+  //dataFile << "time,P,alpha,x,m,sumx,sumx2,summ,summ2,N" << std::endl;
+  std::cout << "opening " << outFile << std::endl;
+  MPI_Status status;
+  char err_buffer[MPI_MAX_ERROR_STRING];
+  int resultlen;
+  int ierr = MPI_File_open(MPI_COMM_WORLD,outFile, 
+                           MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL, 
+                           MPI_INFO_NULL, 
+                           &mpiFileHandle);
+  std::cout << "Open: " << ierr << "," << MPI_SUCCESS << std::endl;
+  std::cout << status.MPI_ERROR << "," << status.MPI_SOURCE << "," << status.MPI_TAG << std::endl;
+  MPI_Error_string(ierr,err_buffer,&resultlen);
+  std::cout << "Error: " << err_buffer << std::endl;
+
+  //printResultsMPI(0.1,100,2.0,3.0,4.0,5.0,
+  //                6.0,7.0,8.0,9.0,10,&mpiFileHandle);
+  lupeP = 1;
+  ierr = MPI_File_write_ordered(mpiFileHandle,&lupeP,sizeof(lupeP), MPI_INT, &status );
+  std::cout << "Write: " << ierr << "," << MPI_SUCCESS << std::endl;
+  std::cout << status.MPI_ERROR << "," << status.MPI_SOURCE << "," << status.MPI_TAG << std::endl;
+  MPI_Error_string(ierr,err_buffer,&resultlen);
+  std::cout << "Error: " << err_buffer << std::endl;
+  MPI_File_close(&mpiFileHandle);
+  MPI_Finalize();
+  exit(0);
 
   /* Set the seed for the random number generator. */
   srand48(time(NULL));
@@ -353,7 +425,7 @@ int main(int argc,char **argv)
                                                     r1,h,F,rho,g,
                                                     numberIters,dt,sdt,
                                                     numberTimeSteps,
-                                                    &dataFile);
+                                                    &mpiFileHandle);
 #ifdef VERBOSE
           /* print a notice */
           std::cout << "Simulation: " 
@@ -378,7 +450,8 @@ int main(int argc,char **argv)
     }
 
 
-  dataFile.close();
+  //dataFile.close();
+  MPI_File_close(&mpiFileHandle);
   MPI_Finalize();
   return(0);
 }
