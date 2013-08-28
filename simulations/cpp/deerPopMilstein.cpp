@@ -146,7 +146,8 @@ void samplePath(double P,double alpha,double beta,
                 double dt,
                 double sdt,
                 int numberTimeSteps,
-                MPI_File* dataFile
+                std::ofstream* dataFile
+                //MPI_File* dataFile
                 )
 {
 
@@ -178,9 +179,6 @@ void samplePath(double P,double alpha,double beta,
   double sumM2 = 0.0;
   int lupe;
 
-  printResultsMPI(0.1,100,2.0,3.0,4.0,5.0,
-                  6.0,7.0,8.0,9.0,10,dataFile);
-  return;
 
   randNormal(dW); // calc. the initial set of random numbers.
   for(lupe=0;lupe<numberIters;++lupe)
@@ -222,7 +220,7 @@ void samplePath(double P,double alpha,double beta,
       sumM2 += m[1]*m[1]*1.0E-2;
     }
 
-  printResultsMPI(dt,numberTimeSteps,P,alpha,m[0],m[1],
+  printResultsCSV(dt,numberTimeSteps,P,alpha,m[0],m[1],
                   sumX,sumX2,sumM,sumM2,numberIters,dataFile);
 
 }
@@ -291,8 +289,8 @@ int main(int argc,char **argv)
    char outFile[1024];
 
   /* File stuff */
-  //std::ofstream dataFile;
-  MPI_File mpiFileHandle;
+  std::ofstream dataFile;
+  //MPI_File mpiFileHandle;
 
    /* MPI related variables. */
    int  mpiResult;
@@ -363,9 +361,11 @@ int main(int argc,char **argv)
 
   /* Open the output file and print out the header. */
   sprintf(outFile,"%s-%d.dat",DEFAULT_FILE,mpiRank);
-  //dataFile.open(outFile,std::ios::out);
-  //dataFile << "time,P,alpha,x,m,sumx,sumx2,summ,summ2,N" << std::endl;
+  dataFile.open(outFile,std::ios::out);
+  dataFile << "time,P,alpha,x,m,sumx,sumx2,summ,summ2,N" << std::endl;
   std::cout << "opening " << outFile << std::endl;
+
+  /*
   MPI_Status status;
   char err_buffer[MPI_MAX_ERROR_STRING];
   int resultlen;
@@ -377,11 +377,12 @@ int main(int argc,char **argv)
   std::cout << status.MPI_ERROR << "," << status.MPI_SOURCE << "," << status.MPI_TAG << std::endl;
   MPI_Error_string(ierr,err_buffer,&resultlen);
   std::cout << "Error: " << err_buffer << std::endl;
+  */
 
   //printResultsMPI(0.1,100,2.0,3.0,4.0,5.0,
-  //                6.0,7.0,8.0,9.0,10,&mpiFileHandle);
+  /*                6.0,7.0,8.0,9.0,10,&mpiFileHandle);
   lupeP = 1;
-  ierr = MPI_File_write_ordered(mpiFileHandle,&lupeP,sizeof(lupeP), MPI_INT, &status );
+  //ierr = MPI_File_write_ordered(mpiFileHandle,&lupeP,sizeof(lupeP), MPI_INT, &status );
   std::cout << "Write: " << ierr << "," << MPI_SUCCESS << std::endl;
   std::cout << status.MPI_ERROR << "," << status.MPI_SOURCE << "," << status.MPI_TAG << std::endl;
   MPI_Error_string(ierr,err_buffer,&resultlen);
@@ -389,6 +390,7 @@ int main(int argc,char **argv)
   MPI_File_close(&mpiFileHandle);
   MPI_Finalize();
   exit(0);
+  */
 
   /* Set the seed for the random number generator. */
   srand48(time(NULL));
@@ -425,7 +427,7 @@ int main(int argc,char **argv)
                                                     r1,h,F,rho,g,
                                                     numberIters,dt,sdt,
                                                     numberTimeSteps,
-                                                    &mpiFileHandle);
+                                                    &dataFile); //mpiFileHandle);
 #ifdef VERBOSE
           /* print a notice */
           std::cout << "Simulation: " 
@@ -450,8 +452,8 @@ int main(int argc,char **argv)
     }
 
 
-  //dataFile.close();
-  MPI_File_close(&mpiFileHandle);
+  dataFile.close();
+  //MPI_File_close(&mpiFileHandle);
   MPI_Finalize();
   return(0);
 }
