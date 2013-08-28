@@ -5,12 +5,12 @@
 // mpic++ -o  mpiManagementExample mpiManagementExample.cpp 
 // mpirun -np 4 --host localhost mpiManagementExample
 
+#define FILE_NAME "fileExample-01.dat"
 #define NUMBER 10
 
 int main(int argc,char **argv)
 {
 	int mpiResult;
-	int numProcesses;
 	int numtasks;
 	int rank;
 	char hostname[MPI_MAX_PROCESSOR_NAME];
@@ -18,10 +18,18 @@ int main(int argc,char **argv)
 
 	double val[NUMBER];
 	int lupe;
-	MPI_Status theStatus;
+	//MPI_Status theStatus;
+
+  // items to write to the file
+  struct output 
+  {
+    double x;
+    int    i;
+  };
+  output basicInfo;
+
 
   // File related stuffs
-  char outFile[1024];
   MPI_File mpiFileHandle;
 
 
@@ -47,12 +55,11 @@ int main(int argc,char **argv)
 		}
 
   // open the file
-  sprintf(outFile,"fileExample-%d.dat",rank);
-  std::cout << "opening " << outFile << std::endl;
+  std::cout << "opening " << FILE_NAME << std::endl;
   MPI_Status status;
   char err_buffer[MPI_MAX_ERROR_STRING];
   int resultlen;
-  int ierr = MPI_File_open(MPI_COMM_WORLD,outFile, 
+  int ierr = MPI_File_open(MPI_COMM_WORLD,FILE_NAME, 
                            MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_EXCL, 
                            MPI_INFO_NULL, 
                            &mpiFileHandle);
@@ -67,6 +74,15 @@ int main(int argc,char **argv)
 	for(lupe=0;lupe<NUMBER;++lupe)
 		std::cout << val[lupe] << ", ";
 	std::cout << std::endl;
+
+  // Write out the basic information to the file.
+  MPI_File_seek(mpiFileHandle,rank*sizeof(rank),MPI_SEEK_SET);
+  basicInfo.x = val[0];
+  basicInfo.i = rank+1;
+  rank = rank*2+1;
+  MPI_File_write(mpiFileHandle,&rank,sizeof(rank), 
+                 MPI_CHAR, &status );
+
 
   MPI_File_close(&mpiFileHandle);
 	MPI_Finalize();
