@@ -1,5 +1,6 @@
 #include <fstream>
 #include <iostream>
+#include <string.h>
 #include <mpi.h>
 
 // mpic++ -o  mpiManagementExample mpiManagementExample.cpp 
@@ -27,7 +28,7 @@ int main(int argc,char **argv)
     int    i;
   };
   output basicInfo;
-
+  char   buffer[1024];
 
   // File related stuffs
   MPI_File mpiFileHandle;
@@ -64,7 +65,9 @@ int main(int argc,char **argv)
                            MPI_INFO_NULL, 
                            &mpiFileHandle);
   std::cout << "Open: " << ierr << "," << MPI_SUCCESS << std::endl;
-  std::cout << "Status: " << status.MPI_ERROR << "," << status.MPI_SOURCE << "," << status.MPI_TAG << std::endl;
+  std::cout << "Status: " << status.MPI_ERROR << "," 
+            << status.MPI_SOURCE << "," 
+            << status.MPI_TAG << std::endl;
   MPI_Error_string(ierr,err_buffer,&resultlen);
   std::cout << "Error: " << err_buffer << std::endl;
 
@@ -76,13 +79,20 @@ int main(int argc,char **argv)
 	std::cout << std::endl;
 
   // Write out the basic information to the file.
-  MPI_File_seek(mpiFileHandle,rank*sizeof(rank),MPI_SEEK_SET);
-  basicInfo.x = val[0];
-  basicInfo.i = rank+1;
-  rank = rank*2+1;
-  MPI_File_write(mpiFileHandle,&rank,sizeof(rank), 
-                 MPI_CHAR, &status );
+  MPI_File_seek(mpiFileHandle,rank*sizeof(basicInfo),MPI_SEEK_SET);
 
+  // Set the data, copy it to the buffer, and print the results.
+  basicInfo.x = val[NUMBER-1];
+  basicInfo.i = rank*2+1;
+  memset(buffer,0,1024);
+  memcpy(buffer,&basicInfo,sizeof(basicInfo));
+  std::cout << "rank: " << rank << " moving pointer to "
+           << rank*sizeof(basicInfo) 
+            << " writing " << buffer << std::endl;
+
+  // write the date at the current pointer
+  MPI_File_write(mpiFileHandle,buffer,sizeof(basicInfo)/sizeof(char),
+                 MPI_CHAR, &status );
 
   MPI_File_close(&mpiFileHandle);
 	MPI_Finalize();
