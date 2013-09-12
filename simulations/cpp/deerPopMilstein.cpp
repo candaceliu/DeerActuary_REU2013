@@ -46,8 +46,8 @@
 #include <string.h>
 
 #define DEFAULT_FILE "threaded_trial"
-#define NUMBER_THREADS 2
-//#define DEBUG
+#define NUMBER_THREADS 4
+#define DEBUG
 #define VERBOSE
 
 /* create a mutex that is used to protect the writing of the data to the file. */
@@ -235,7 +235,7 @@ int main(int argc,char **argv)
   double initialTime  =  0.0;
   double finalTime    = 10.0;
 #ifdef DEBUG
-  int numberIters     = 1000;
+  int numberIters     = 100;
   int numberTimeSteps = 5000;
 #else
   int numberIters     = 100000;
@@ -270,11 +270,11 @@ int main(int argc,char **argv)
   double deltaAlpha;
 
 #ifdef DEBUG
-  int numP     = 1000;
-  int numAlpha = 1000;
-#else
   int numP     = 100;
   int numAlpha = 100;
+#else
+  int numP     = 1000;
+  int numAlpha = 1000;
 #endif
 
    int boundsP[2];
@@ -313,20 +313,21 @@ int main(int argc,char **argv)
    MPI_Comm_rank(MPI_COMM_WORLD,&mpiRank);
    MPI_Get_processor_name(mpiHostname, &mpiHostnameLen);
    MPI_Errhandler_set(MPI_COMM_WORLD,MPI_ERRORS_RETURN);
+#ifdef VERBOSE
    std::cout << "Number of tasks= " <<  numMPITasks
                                          << " My rank= " << mpiRank
                                          << " Running on " << mpiHostname
                                          << std::endl;
-
+#endif
 
   /* Set the step values for the parameters. */
   deltaP     = calcDelta(Pmin,Pmax,numP);
   deltaAlpha = calcDelta(alphaMin,alphaMax,numAlpha);
 
-  /* Sort out which process is doign what. */
+  /* Sort out which process is doing what. */
   if(mpiRank == 0)
     {
-      // Figure out whow does what.
+      // Figure out who does what.
       int totalP = numP/numMPITasks;
       for(lupeP=0;lupeP<(numMPITasks-1);++lupeP)
         {
@@ -346,9 +347,11 @@ int main(int argc,char **argv)
       MPI_Recv(boundsP,2,MPI_INT,MPI_ANY_SOURCE,MPI_ANY_TAG,MPI_COMM_WORLD,&mpiStatus);
       boundsP[1] -= 1;
     }
-  //std::cout << "Process: " << mpiRank << " Got the bound: " << boundsP[0] << "," << boundsP[1] << std::endl;
+#ifdef VERBOSE
+  std::cout << "Process: " << mpiRank << " Got the bound: " << boundsP[0] << "," << boundsP[1] << std::endl;
   //MPI_Finalize();
   //return(0);
+#endif
 
 
   /* Set the number of iterations used in the main loop. */
