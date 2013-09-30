@@ -46,8 +46,8 @@
 #include <string.h>
 
 #define DEFAULT_FILE "threaded_trial"
-#define NUMBER_THREADS 4
-#define DEBUG
+#define NUMBER_THREADS 2
+// #define DEBUG
 #define VERBOSE
 
 /* create a mutex that is used to protect the writing of the data to the file. */
@@ -216,8 +216,8 @@ void samplePath(double P,double alpha,double beta,
       // Update the tally used for the statistical ensemble
       sumX  += m[0];
       sumX2 += m[0]*m[0];
-      sumM  += m[1]*1.0E-1;
-      sumM2 += m[1]*m[1]*1.0E-2;
+      sumM  += m[1]*1.0E-2;
+      sumM2 += m[1]*m[1]*1.0E-4;
     }
 
   printResultsCSV(dt,numberTimeSteps,P,alpha,m[0],m[1],
@@ -238,8 +238,8 @@ int main(int argc,char **argv)
   int numberIters     = 100;
   int numberTimeSteps = 5000;
 #else
-  int numberIters     = 100000;
-  int numberTimeSteps = 500000;
+  int numberIters     = 50000;
+  int numberTimeSteps = 100000;
 #endif
   double dt;
   double sdt;
@@ -359,7 +359,7 @@ int main(int argc,char **argv)
   sdt = sqrt(dt);
 
 #ifdef VERBOSE
-  std::cout << "Starting iteration. " << numberTimeSteps << " iterations." << std::endl;
+  std::cout << "Starting iteration. " << numberTimeSteps << " time steps." << std::endl;
 #endif
 
   /* Open the output file and print out the header. */
