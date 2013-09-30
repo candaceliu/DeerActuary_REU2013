@@ -15,9 +15,12 @@ DEP=
 	$(CC) $(CFLAGS) $(CURLFLAGS) -c $<
 
 
-all:	deerPopMilstein
+all:	deerPopMilstein readDeerData
 
 deerPopMilstein: deerPopMilstein.o $(DEP) $(LDEP)
+	$(CC) $(CFLAGS) -o $@ $@.o $(LIB)
+
+readDeerData: readDeerData.o $(DEP) $(LDEP)
 	$(CC) $(CFLAGS) -o $@ $@.o $(LIB)
 
 
