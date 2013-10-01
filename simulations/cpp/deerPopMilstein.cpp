@@ -47,8 +47,9 @@
 
 #define DEFAULT_FILE "threaded_trial"
 #define NUMBER_THREADS 2
-// #define DEBUG
+#define DEBUG
 #define VERBOSE
+#define WRITEBINARY 
 
 /* create a mutex that is used to protect the writing of the data to the file. */
 std::mutex writeToFile;
@@ -62,7 +63,6 @@ double calcDelta(double theMin,double theMax,int number)
 /* Routine to write out the given data to the file. */
 void printResultsCSV(double dt,int numberTimeSteps,
                      double P, double alpha,
-                     double m1, double m2, 
                      double sumX, double sumX2,
                      double sumM, double sumM2,
                      int numberIters,
@@ -73,7 +73,6 @@ void printResultsCSV(double dt,int numberTimeSteps,
   *dataFile << dt*((double)numberTimeSteps) << "," 
             << P << "," 
             << alpha << "," 
-            << m1 << "," << m2 << "," 
             << sumX << "," << sumX2 << "," 
             << sumM << "," << sumM2 << "," 
             << numberIters << std::endl;
@@ -86,10 +85,10 @@ void printResultsCSV(double dt,int numberTimeSteps,
 /* Routine to write out the given data to the file. */
 void printResultsMPI(double dt,int numberTimeSteps,
                      double P, double alpha,
-                     double m1, double m2, 
                      double sumX, double sumX2,
                      double sumM, double sumM2,
                      int numberIters,
+                     int lupeP,int numP,int lupeAlpha,int numAlpha,
                      MPI_File* dataFile)
 {
   std::lock_guard<std::mutex> guard(writeToFile);  // Make sure that only this routine
@@ -101,8 +100,8 @@ void printResultsMPI(double dt,int numberTimeSteps,
     double theTime;
     double P;
     double alpha;
-    double m1;
-    double m2;
+    int lupeAlpha;
+    int lupeP;
     double sumX;
     double sumX2;
     double sumM;
@@ -110,18 +109,23 @@ void printResultsMPI(double dt,int numberTimeSteps,
     int iterations;
   };
   output basicStats;
+  char buffer[256];
 
   basicStats.theTime    = dt*((double)numberTimeSteps);
   basicStats.P          = P;
   basicStats.alpha      = alpha;
-  basicStats.m1         = m1;
-  basicStats.m2         = m2;
+  basicStats.lupeAlpha  = lupeAlpha;
+  basicStats.lupeP      = lupeP;
   basicStats.sumX       = sumX;
   basicStats.sumX2      = sumX2;
   basicStats.sumM       = sumM;
   basicStats.sumM2      = sumM2;
   basicStats.iterations = numberIters;
-  MPI_File_write_ordered(*dataFile,&basicStats,sizeof(basicStats), MPI_INT, &status );
+  memset(buffer,0,256);
+  memcpy(buffer,&basicStats,sizeof(basicStats));
+
+  MPI_File_seek(*dataFile,(lupeAlpha+(numAlpha+1)*lupeP)*sizeof(basicStats),MPI_SEEK_SET);
+  MPI_File_write(*dataFile,buffer,sizeof(basicStats)/sizeof(char), MPI_CHAR, &status );
 }
 
 
@@ -139,17 +143,22 @@ inline void randNormal(double nu[])
 
 
 /* Routine to approximate one sample path. */
-void samplePath(double P,double alpha,double beta,
-                double r1,double h,double F,
-                double rho,double g,
-                int numberIters,
-                double dt,
-                double sdt,
-                int numberTimeSteps,
-                std::ofstream* dataFile
-                //MPI_File* dataFile
-                )
-{
+void samplePath
+(double P,double alpha,double beta,
+ double r1,double h,double F,
+ double rho,double g,
+ int numberIters,
+ double dt,
+ double sdt,
+ int numberTimeSteps,
+ int lupeP,int numP,int lupeAlpha,int numAlpha,
+#ifdef WRITEBINARY
+ MPI_File* dataFile
+#else
+ std::ofstream* dataFile
+#endif
+ )
+ {
 
   /* Run time parameters */
   int timeLupe;
@@ -220,8 +229,15 @@ void samplePath(double P,double alpha,double beta,
       sumM2 += m[1]*m[1]*1.0E-4;
     }
 
-  printResultsCSV(dt,numberTimeSteps,P,alpha,m[0],m[1],
+#ifdef WRITEBINARY
+  printResultsMPI(dt,numberTimeSteps,P,alpha,
+                  sumX,sumX2,sumM,sumM2,numberIters,
+                  lupeP,numP,lupeAlpha,numAlpha,
+                  dataFile);
+#else
+  printResultsCSV(dt,numberTimeSteps,P,alpha,
                   sumX,sumX2,sumM,sumM2,numberIters,dataFile);
+#endif
 
 }
 
@@ -270,27 +286,30 @@ int main(int argc,char **argv)
   double deltaAlpha;
 
 #ifdef DEBUG
-  int numP     = 100;
-  int numAlpha = 100;
+  int numP     = 9;
+  int numAlpha = 7;
 #else
-  int numP     = 1000;
-  int numAlpha = 1000;
+  int numP     = 350;
+  int numAlpha = 350;
 #endif
 
-   int boundsP[2];
-   int lupeP,lupeAlpha;
+  int boundsP[2];
+  int lupeP,lupeAlpha;
 
   /* define the parameters */
   double P;
   double alpha;
 
 
-   /* Define the output parameters. */
-   char outFile[1024];
+  /* Define the output parameters. */
+  char outFile[1024];
 
   /* File stuff */
+#ifdef WRITEBINARY
+  MPI_File mpiFileHandle;
+#else
   std::ofstream dataFile;
-  //MPI_File mpiFileHandle;
+#endif
 
    /* MPI related variables. */
    int  mpiResult;
@@ -345,7 +364,7 @@ int main(int argc,char **argv)
     {
       // Get my bounds for the values of P to use.
       MPI_Recv(boundsP,2,MPI_INT,MPI_ANY_SOURCE,MPI_ANY_TAG,MPI_COMM_WORLD,&mpiStatus);
-      boundsP[1] -= 1;
+                boundsP[1] -= 1;
     }
 #ifdef VERBOSE
   std::cout << "Process: " << mpiRank << " Got the bound: " << boundsP[0] << "," << boundsP[1] << std::endl;
@@ -359,16 +378,13 @@ int main(int argc,char **argv)
   sdt = sqrt(dt);
 
 #ifdef VERBOSE
-  std::cout << "Starting iteration. " << numberTimeSteps << " time steps." << std::endl;
+                std::cout << "Starting iteration. " << numberTimeSteps << " time steps." << std::endl;
 #endif
 
   /* Open the output file and print out the header. */
-  sprintf(outFile,"%s-%d.dat",DEFAULT_FILE,mpiRank);
-  dataFile.open(outFile,std::ios::out);
-  dataFile << "time,P,alpha,x,m,sumx,sumx2,summ,summ2,N" << std::endl;
-  std::cout << "opening " << outFile << std::endl;
 
-  /*
+#ifdef WRITEBINARY
+ sprintf(outFile,"%s.dat",DEFAULT_FILE);
   MPI_Status status;
   char err_buffer[MPI_MAX_ERROR_STRING];
   int resultlen;
@@ -380,20 +396,13 @@ int main(int argc,char **argv)
   std::cout << status.MPI_ERROR << "," << status.MPI_SOURCE << "," << status.MPI_TAG << std::endl;
   MPI_Error_string(ierr,err_buffer,&resultlen);
   std::cout << "Error: " << err_buffer << std::endl;
-  */
+#else 
+ sprintf(outFile,"%s-%d.dat",DEFAULT_FILE,mpiRank);
+  dataFile.open(outFile,std::ios::out);
+  dataFile << "time,P,alpha,x,m,sumx,sumx2,summ,summ2,N" << std::endl;
+  std::cout << "opening " << outFile << std::endl;
+#endif
 
-  //printResultsMPI(0.1,100,2.0,3.0,4.0,5.0,
-  /*                6.0,7.0,8.0,9.0,10,&mpiFileHandle);
-  lupeP = 1;
-  //ierr = MPI_File_write_ordered(mpiFileHandle,&lupeP,sizeof(lupeP), MPI_INT, &status );
-  std::cout << "Write: " << ierr << "," << MPI_SUCCESS << std::endl;
-  std::cout << status.MPI_ERROR << "," << status.MPI_SOURCE << "," << status.MPI_TAG << std::endl;
-  MPI_Error_string(ierr,err_buffer,&resultlen);
-  std::cout << "Error: " << err_buffer << std::endl;
-  MPI_File_close(&mpiFileHandle);
-  MPI_Finalize();
-  exit(0);
-  */
 
   /* Set the seed for the random number generator. */
   srand48(time(NULL));
@@ -430,12 +439,19 @@ int main(int argc,char **argv)
                                                     r1,h,F,rho,g,
                                                     numberIters,dt,sdt,
                                                     numberTimeSteps,
-                                                    &dataFile); //mpiFileHandle);
+                                                    lupeP,numP,lupeAlpha,numAlpha,
+#ifdef WRITEBINARY
+                                                    &mpiFileHandle
+#else
+                                                    &dataFile
+#endif
+                                                    );
 #ifdef VERBOSE
           /* print a notice */
-          std::cout << "Simulation: " 
-                    << dt*((double)numberTimeSteps) << "," 
-                    << P << "," << alpha << "," 
+          std::cout << "Simulation: " << mpiRank << "-"
+                    << lupeAlpha << "," 
+                    << lupeP << "," << (lupeAlpha+(numAlpha+1)*lupeP) << ","
+                    << alpha << "," << P << "," << numberThreads << ","
                     << simulation[numberThreads-1].get_id() << std::endl;
 #endif
         }
@@ -445,18 +461,30 @@ int main(int argc,char **argv)
     }
 
   // Wait until all threads are done.
+#ifdef DEBUG
+      std::cout << "Numerics done - waiting on any remaining threads " 
+                << numberThreads << "," << mpiRank
+                << std::endl;
+#endif
   while(numberThreads>0)
     {
 #ifdef DEBUG
       std::cout << "Waiting on thread " << simulation[numberThreads-1].get_id() 
+                << "," << numberThreads-1 << "," << mpiRank
                 << std::endl;
 #endif
       simulation[--numberThreads].join();
     }
+#ifdef DEBUG
+      std::cout << "All done " << std::endl;
+#endif
 
 
+#ifdef WRITEBINARY
+  MPI_File_close(&mpiFileHandle);
+#else 
   dataFile.close();
-  //MPI_File_close(&mpiFileHandle);
+#endif
   MPI_Finalize();
   return(0);
 }
