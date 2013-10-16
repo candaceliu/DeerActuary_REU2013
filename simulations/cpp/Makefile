@@ -25,5 +25,5 @@ readDeerData: readDeerData.o $(DEP) $(LDEP)
 
 
 clean:
-	rm -f *.o *~ deerPopMilstein
+	rm -f *.o *~ deerPopMilstein readDeerData
 
