@@ -127,10 +127,15 @@ minF = min(results$mF)
 maxsF = max(results$sFx)
 minsF = min(results$sFx)
 
+png('fundMeanContour.png',width=1024,height=1024)
 levelplot(results$mF~results$alpha*results$P,contour=TRUE,
           xlab=expression(alpha),ylab='P',main="Sample Mean Fund Balance")
+dev.off()
+
+png('fundSDContour.png',width=1024,height=1024)
 levelplot(results$sFx~results$alpha*results$P,contour=TRUE,
           xlab=expression(alpha),ylab='P',main="Sample Std. Dev. Fund Balance")
+dev.off()
 
 filename = "meanfundBalanceByP.png"
 if(!file.exists(filename))
