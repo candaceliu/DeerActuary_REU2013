@@ -40,9 +40,11 @@
 \title{Fund Management for Automobile and Deer Collisions}
 \subtitle{Actuarial Considerations}
 
-\author{Kelly Black, Candace Liu, Elizabeth Sweeney, Lindong Zhou}
-\institute{Clarkson University, The College of New Jersey, and
-  Middlebury College} 
+\author{Kelly Black\footnotemark[1], Candace Liu\footnotemark[1], 
+  Elizabeth Sweeney\footnotemark[2], Lindong Zhou\footnotemark[3]}
+\institute{\footnotemark[1]Clarkson University, 
+  \footnotemark[2]The College of New Jersey, and
+  \footnotemark[3]Middlebury College} 
 \date{18 October, 2013}
 
 \begin{frame}[plain]
@@ -231,7 +233,7 @@
   \frametitle{Impact of Reducing Population}
 
   Numerous investigators and state agencies have sought to reduce the
-  population, $hx$. 
+  population, $x$. 
 
   \vfill
 
@@ -275,17 +277,6 @@
 \end{frame}
 
 
-\begin{frame}
-  \frametitle{Athens County, Ohio}
-  Schwabe, \emph{et al.}, 2000
-  \begin{itemize}
-  \item Carrying capacity is approximately 28,000
-  \item Growth rate is 1.7
-  \item Harvest rate is 0.16
-  \end{itemize}
-\end{frame}
-
-
 \section{Insurance}
 
 \begin{frame}
@@ -319,13 +310,12 @@
 \end{frame}
 
 
-
 \begin{frame}
   \frametitle{Models}
-  \begin{eqnarray}
+  \begin{eqnarray*}
     dx &=& \tilde{r} x \lp 1- \frac{x}{\tilde{f}}\rp dt +\alpha x \, dW \\
     dm &=& ( \rho m - \beta x + P) dt - \gamma x \, dW
-  \end{eqnarray}
+  \end{eqnarray*}
   \begin{itemize}
   \item Known Parameters - $\tilde{r}$, $\tilde{f}$, $\rho$, $\beta$
   \item Unknown Parameters - $\alpha$, $\gamma$, $P$
@@ -333,35 +323,6 @@
 \end{frame}
 
 \section{Numerics}
-
-\begin{frame}
-  \frametitle{Approximation}
-  %%%%%%%%% Include figure
-  \vspace*{-3em}
-  \begin{eqnarray*}
-    dX &=& f(X) \, dt + g(X) \, dW \\
-  \end{eqnarray*}
-  \vspace*{-3em}
-  \begin{center}
-    $X_{j} =$ approximation of $X(t_{j})$ \\ [20pt]
-    % \includegraphics[height=4cm]{approximation}
-  \end{center}
-
-\end{frame}
-
-
-
-\begin{frame}
-  \frametitle{Models}
-  \begin{eqnarray*}
-    dx &=& \tilde{r} x \lp 1- \frac{x}{\tilde{f}}\rp dt +\alpha x \, dW \\
-    dm &=& ( \rho m - \beta x + P) dt - \gamma x \, dW
-  \end{eqnarray*}
-  \begin{itemize}
-  \item Known Parameters - $\tilde{r}$, $\tilde{f}$, $\rho$, $\beta$
-  \item Unknown Parameters - $\alpha$, $\gamma$, $P$
-  \end{itemize}
-\end{frame}
 
 \begin{frame}
   \frametitle{Stochastic Logistic Equation}
@@ -377,7 +338,7 @@
   \begin{eqnarray*}
     dx &=& \tilde{r} x \lp 1- \lp\frac{x}{\tilde{f}}\rp^m\rp dt +\alpha x \, dW.
   \end{eqnarray*}
-  using the substitution $z=x^{-m}$.
+  using the substitution $\theta=x^{-m}$.
 
   
 \end{frame}
@@ -387,13 +348,13 @@
 
   If $x$ is an It\^o process where (Kuo)
   \begin{eqnarray*}
-    x(t) & = & x(0) + \int^t_0 f(s) \, dW(s) + \int^t_0 g(s) \, ds,
+    x(t) & = & x(a) + \int^t_a f(s) \, dW(s) + \int^t_a g(s) \, ds,
   \end{eqnarray*}
   then a function, $\theta(x,t)$, satisfies
   \begin{eqnarray*}
-    \theta(x,t) & = & \theta(x(0),0) + 
-    \int^t_0 \pderiv{x} \theta(x,s) f(s) \, dW(s) + \\
-    & & \int^t_0 \pderiv{t} \theta(x,s) + \pderiv{x} \theta(x,s) g(s) + \half \mderiv{2}{x} \theta(x,s) f^2(s) \, ds
+    \theta(x,t) & = & \theta(x(a),a) + 
+    \int^t_a \pderiv{x} \theta(x,s) f(s) \, dW(s) + \\
+    & & \int^t_a \pderiv{t} \theta(x,s) + \pderiv{x} \theta(x,s) g(s) + \half \mderiv{2}{x} \theta(x,s) f^2(s) \, ds
   \end{eqnarray*}
 
   
@@ -404,25 +365,48 @@
 
   The population equation in integral form
   \begin{eqnarray*}
-    x(t) &=& x(0) + \int_0^t \alpha x \, dW(s) + \\
-    & & \int_0^t \tilde{r} x \lp 1- \frac{x}{\tilde{f}}\rp dt .
+    x(t) &=& x(a) + \int_a^t \alpha x \, dW(s) + \int_a^t \tilde{r} x \lp 1- \frac{x}{\tilde{f}}\rp ds.
   \end{eqnarray*}
 
   \vfill
 
-  Here $\theta(x)=x^{-1}$ ($m=1$):
+  Here $\theta(x)=\frac{\tilde{f}}{x}$ ($m=1$):
   \begin{eqnarray*}
-    \theta(t) &=& \theta(0) + \int^t_0 -c\theta \, dW(s) +
-    \int^t_0 \lp -b+1 \rp \theta + b \, ds.
+    \theta(t) &=& \theta(a) + \int^t_a -\alpha\theta \, dW(s) +
+    \int^t_a \lp \alpha^2-r \rp \theta + r \, ds.
   \end{eqnarray*}
 
+\end{frame}
 
+\begin{frame}
+  \frametitle{Approximating The Deer Population}
+
+  Solving for $\theta$ we get
+  \begin{eqnarray*}
+    \theta(t) & = & \frac{\tilde{r}}{\tilde{r}-\half\alpha^2} -
+    \frac{\alpha \tilde{r}}{\tilde{r}-\half \alpha^2} 
+    e^{\lp\half \alpha^2 - r\rp t - \alpha W } 
+    \int^t_a e^{\lp \tilde{r}-\half\alpha^2\rp s + \alpha W} \, dW(s),
+  \end{eqnarray*}
+
+  and the deer population is 
+  \begin{eqnarray*}
+    x(t) & = & \frac{\tilde{f}}{\theta(t)}.
+  \end{eqnarray*}
+
+  The initial condition is fixed so that initially the deer population
+  is at the stationary point.
   
 \end{frame}
 
-
 \begin{frame}
   \frametitle{Method of Approximations}
+
+  Approximating
+  \begin{eqnarray*}
+    X(t) & = & X(a) + \int^t_a f(X) \, ds + \int^t_a g(X) \, dW(s).
+  \end{eqnarray*}
+
   Milstein Method - $O(\Delta t^{1.5})$
   \begin{eqnarray*}
     X_{j} &=& X_{j-1} + \triangle tf(X_{j-1}) + g(X_{j-1})(W(\tau_{j})-W(\tau_{j-1}
@@ -430,23 +414,43 @@
     && + \frac{1}{2} g(X_{j-1})g'(X_{j-1})((W(\tau_{j})-W(\tau_{j-1}))^{2}-\triangle t)\\
     j &=& 1,2,... ,L \\
   \end{eqnarray*}
+
+  
 \end{frame}
+
+\begin{frame}
+  \frametitle{Athens County, Ohio}
+  Schwabe, \emph{et al.}, 2000
+  \begin{itemize}
+  \item Carrying capacity is approximately 28,000
+  \item Growth rate is 1.7
+  \item Harvest rate is 0.16
+  \end{itemize}
+
+  We can find approximations for the following parameters: \\
+  \begin{tabular}{l}
+    $\tilde{r}$ \\
+    $\tilde{f}$ \\
+    $\rho$ \\
+    $\beta$ \\
+    $\gamma$
+  \end{tabular}
+
+\end{frame}
+
 
 
 
 \begin{frame}
   \frametitle{Parameter Space}
-  \hspace*{-1cm}
-  %%%%%%%%%% Include 3D plot of parameter space
-  % \includegraphics[height=7cm]{parameterspace}
+
+  Parameters left over: $\alpha$ and $P$. 
+
+  
+  \centerline{\includegraphics[height=7cm]{fullParameters}}
+
 \end{frame}
 
-\begin{frame}
-  \frametitle{Parameter Space}
-  \hspace*{-1cm}
-  %%%%%%%%%% Include 3D plot of parameter space
-  % \includegraphics[height=7cm]{parameterspace2}
-\end{frame}
 
 
 \section{Results}
@@ -460,89 +464,107 @@
     \end{array}
   \end{eqnarray*}
   \hspace*{-2cm}
-  % \includegraphics[height=7cm]{deerins}
+  \centerline{\includegraphics[height=5cm]{deerins}}
 \end{frame}
 
 
 \begin{frame}
-  \frametitle{Results - X vs. alpha }
-  \framesubtitle{500 iterations}
+    \frametitle{Results - Histogram}
+        \framesubtitle{1000 iterations}
+\includegraphics[height=6cm]{hist1000_xmean_alpha07}
+\end{frame}
+
+
+
+\begin{frame}
+  \frametitle{Sample Mean of the Deer Population }
   \hspace*{-5mm}
-  % \includegraphics[height=6cm]{boxplot500_xmean_alpha}
-  % \includegraphics[height=6cm]{boxplot500_xvar_alpha}
+  \begin{columns}
+    \column{0.5\textwidth}
+    \includegraphics[height=5cm]{meanDeerByAlpha}
+    \column{0.5\textwidth}
+    \includegraphics[height=5cm]{meanDeerByAlpha_boxplot}
+  \end{columns}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Results - X vs. alpha }
-  \framesubtitle{1000 iterations}
+  \frametitle{Sample Standard Deviation of Deep Population}
   \hspace*{-5mm}
-  % \includegraphics[height=6cm]{boxplot1000_xmean_alpha}
-  % \includegraphics[height=6cm]{boxplot1000_xvar_alpha}
+  \begin{columns}
+    \column{0.5\textwidth}
+    \includegraphics[height=5cm]{stdDevDeerbyAlpha}
+    \column{0.5\textwidth}
+    \includegraphics[height=5cm]{stdDevDeerbyAlpha_boxplot}
+  \end{columns}
 \end{frame}
 
+%\begin{frame}
+%  \frametitle{Results - Histogram}
+%  \framesubtitle{1000 iterations}
+%  % \includegraphics[height=6cm]{hist1000_xmean_alpha07}
+%\end{frame}
+
+
 \begin{frame}
-  \frametitle{Results - Histogram}
-  \framesubtitle{1000 iterations}
-  % \includegraphics[height=6cm]{hist1000_xmean_alpha07}
-\end{frame}
-
-
-
-\begin{frame}
-  \frametitle{Results - M vs. alpha }
-  \framesubtitle{500 iterations}
+  \frametitle{Sample Mean of the Fund Balance }
   \hspace*{-5mm}
-  % \includegraphics[height=6cm]{boxplot500_mmean_alpha}
-  % \includegraphics[height=6cm]{boxplot500_mvar_alpha}
+  \begin{columns}
+    \column{0.5\textwidth}
+    \includegraphics[height=5cm]{meanFundBalanceByAlpha}
+    \column{0.5\textwidth}
+    \includegraphics[height=5cm]{meanfundBalanceByAlpha_boxplot}
+  \end{columns}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Results - M vs. alpha }
-  \framesubtitle{1000 iterations}
+  \frametitle{Sample Mean of the Fund Balance }
   \hspace*{-5mm}
-  % \includegraphics[height=6cm]{boxplot1000_mmean_alpha}
-  % \includegraphics[height=6cm]{boxplot1000_mvar_alpha}
-\end{frame}
-\begin{frame}
-  \frametitle{Results - M vs. gamma }
-  \framesubtitle{500 iterations}
-  \hspace*{-5mm}
-  % \includegraphics[height=6cm]{boxplot500_mmean_gamma}
-  % \includegraphics[height=6cm]{boxplot500_mvar_gamma}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Results - M vs. gamma }
-  \framesubtitle{1000 iterations}
-  \hspace*{-5mm}
-  % \includegraphics[height=6cm]{boxplot1000_mmean_gamma}
-  % \includegraphics[height=6cm]{boxplot1000_mvar_gamma}
-\end{frame}
-
-
-
-
-
-\begin{frame}
-  \frametitle{Results - M vs. P }
-  \framesubtitle{500 iterations}
-  \hspace*{-5mm}
-  % \includegraphics[height=6cm]{boxplot500_mmean_P}
-  % \includegraphics[height=6cm]{boxplot500_mvar_P}
+  \begin{columns}
+    \column{0.5\textwidth}
+    \includegraphics[height=5cm]{meanfundBalanceByP}
+    \column{0.5\textwidth}
+    \includegraphics[height=5cm]{meanFundBalanceByP_boxplot}
+  \end{columns}
 \end{frame}
 
 
 \begin{frame}
-  \frametitle{Results - M vs. P }
-  \framesubtitle{1000 iterations}
+  \frametitle{Sample Standard Deviation of the Fund Balance}
   \hspace*{-5mm}
-  % \includegraphics[height=6cm]{boxplot1000_mmean_P}
-  % \includegraphics[height=6cm]{boxplot1000_mvar_P}
+  \begin{columns}
+    \column{0.5\textwidth}
+    \includegraphics[height=5cm]{stdDevDeerbyAlpha}
+    \column{0.5\textwidth}
+    \includegraphics[height=5cm]{stdDevDeerbyAlpha_boxplot}
+  \end{columns}
 \end{frame}
+
+\begin{frame}
+  \frametitle{Fund Balance}
+  \hspace*{-5mm}
+  \begin{columns}
+    \column{0.5\textwidth}
+    \includegraphics[height=5cm]{fundMeanContour}
+    \column{0.5\textwidth}
+    \includegraphics[height=5cm]{fundSDContour}
+  \end{columns}
+\end{frame}
+
 
 
 
 \section{Conclusions}
+
+\begin{frame}
+  \frametitle{Questions}
+
+  \begin{itemize}
+  \item Sensitivity
+  \item Additional noise term for the fund balance
+  \item What is the appropriate parameter space?
+  \end{itemize}
+  
+\end{frame}
 
 \begin{frame}
   \frametitle{Conclusion}
@@ -554,6 +576,7 @@
   \item Initial $M$ may be too big
   \item Multivariate sensitivity should be examined
   \end{itemize}
+
 \end{frame}
 
 
@@ -566,8 +589,14 @@
 
 \begin{frame}
   \frametitle{Acknowledgments}
+  \vfill
   Thanks to Dr. Joel Foisy, and NSF (NSF \# 1262737) for their
   support and involvement in this program.
+  \vfill
+  We also thank Anne Shelton and Brian Macherone from the Research IT
+  group at SUNY Albany for their generous support in using their
+  parallel computational facilities.
+  \vfill
 \end{frame}
 
 
