@@ -4,9 +4,10 @@
 
 #macro definitions
 SHELL = /bin/sh
-CC=g++
-CFLAGS=-O3 -Winline -finline-functions   -finline-limit=1200  -I/usr/local/include
-LIB=-lm
+CC=mpic++
+## CC=/opt/SUNWhpc/HPC8.2.1/gnu/bin/mpic++
+CFLAGS=-O3 -Winline -finline-functions   -finline-limit=1200  -I/usr/local/include -Wall -std=c++0x
+LIB=-lm -lpthread
 LDEP=
 DEP= 
 
@@ -14,12 +15,15 @@ DEP=
 	$(CC) $(CFLAGS) $(CURLFLAGS) -c $<
 
 
-all:	deerPopMilstein
+all:	deerPopMilstein readDeerData
 
 deerPopMilstein: deerPopMilstein.o $(DEP) $(LDEP)
 	$(CC) $(CFLAGS) -o $@ $@.o $(LIB)
 
+readDeerData: readDeerData.o $(DEP) $(LDEP)
+	$(CC) $(CFLAGS) -o $@ $@.o $(LIB)
+
 
 clean:
-	rm -f *.o *~ deerPopMilstein
+	rm -f *.o *~ deerPopMilstein readDeerData
 
